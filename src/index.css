@@ -1,0 +1,51 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --animate-fade-in: fade-in 0.2s ease-out both;
+  --animate-pop-in: pop-in 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+  --animate-slide-up: slide-up 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-float: float 5s ease-in-out infinite;
+  --animate-blob: blob 14s ease-in-out infinite;
+  --animate-gradient: gradient 6s ease infinite;
+
+  @keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes pop-in { from { opacity: 0; transform: translateY(8px) scale(0.96) } to { opacity: 1; transform: none } }
+  @keyframes slide-up { from { opacity: 0; transform: translateY(14px) } to { opacity: 1; transform: none } }
+  @keyframes float { 0%, 100% { transform: translateY(0) rotate(-2deg) } 50% { transform: translateY(-10px) rotate(2deg) } }
+  @keyframes blob {
+    0%, 100% { transform: translate(0, 0) scale(1) }
+    33% { transform: translate(40px, -30px) scale(1.1) }
+    66% { transform: translate(-30px, 20px) scale(0.95) }
+  }
+  @keyframes gradient { 0%, 100% { background-position: 0% 50% } 50% { background-position: 100% 50% } }
+}
+
+html { font-size: 106.25%; } /* 17px base: every rem-based size scales up */
+body { @apply bg-slate-50 text-zinc-900 antialiased dark:bg-[#0a0b14] dark:text-zinc-100; }
+
+@utility btn {
+  @apply inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-3.5 py-2 text-[0.95rem] font-medium transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50;
+}
+@utility btn-primary {
+  @apply btn bg-gradient-to-r from-indigo-600 to-sky-500 text-white shadow-md shadow-indigo-500/25 hover:-translate-y-px hover:shadow-lg hover:shadow-indigo-500/40 active:translate-y-0;
+}
+@utility btn-ghost {
+  @apply btn hover:bg-indigo-50 hover:text-indigo-700 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300;
+}
+@utility input {
+  @apply w-full rounded-lg border border-zinc-300 bg-white/70 px-3.5 py-2.5 text-[0.95rem] outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15 dark:border-zinc-700 dark:bg-zinc-900/70;
+}
+@utility text-gradient {
+  @apply bg-gradient-to-r from-indigo-500 via-sky-400 to-violet-500 bg-[length:200%_auto] bg-clip-text text-transparent;
+}
+.hljs { background: transparent !important; }
+:focus-visible { outline: 2px solid var(--color-indigo-500); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

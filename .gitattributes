@@ -1,0 +1,5 @@
+# Keep LF line endings in the repo and working copy (avoids CRLF warnings; shell scripts need LF)
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary

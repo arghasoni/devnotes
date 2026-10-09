@@ -1,4 +1,4 @@
-import { ArrowRight, Code2, FileText, Folder as FolderIcon, Image, Link2, Plus } from 'lucide-react'
+import { ArrowRight, Code2, FileText, Folder as FolderIcon, Image, Link2, Pin, Plus } from 'lucide-react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useApp } from './Layout'
 import { folderPath, subtreeIds } from '../components/Sidebar'
@@ -35,7 +35,7 @@ function Stat({ label, value, icon, gradient, delay }: { label: string; value: n
 }
 
 export function NoteList() {
-  const { notes, folders, loaded } = useApp()
+  const { notes, folders, loaded, pinned, togglePin } = useApp()
   const { user } = useAuth()
   const navigate = useNavigate()
   const [params] = useSearchParams()
@@ -50,6 +50,7 @@ export function NoteList() {
 
   const folder = folders.find(f => f.$id === folderId)
   const isHome = !q && !folder
+  const pinnedNotes = pinned.map(id => notes.find(n => n.$id === id)).filter((n): n is Note => !!n)
   const count = (type: Block['type']) => notes.reduce((a, n) => a + n.blocks.filter(b => b.type === type).length, 0)
 
   return (
@@ -66,6 +67,12 @@ export function NoteList() {
             <Stat label="Code snippets" value={count('code')} icon={<Code2 className="size-6" />} gradient="from-violet-500 to-fuchsia-400" delay={240} />
             <Stat label="Screenshots" value={count('image')} icon={<Image className="size-6" />} gradient="from-sky-500 to-emerald-400" delay={300} />
           </div>
+          {pinnedNotes.length > 0 && (
+            <>
+              <h2 className="mt-12 mb-4 flex items-center gap-2 text-2xl font-bold"><Pin className="size-6 text-indigo-500" /> Pinned</h2>
+              <ul className="space-y-3">{pinnedNotes.map(noteCard)}</ul>
+            </>
+          )}
           <h2 className="mt-12 mb-4 text-2xl font-bold">Recent notes</h2>
         </section>
       ) : (
@@ -100,12 +107,13 @@ export function NoteList() {
     const imgs = n.blocks.filter(b => b.type === 'image').length
     const codes = n.blocks.filter(b => b.type === 'code').length
     const text = excerpt(n.blocks)
+    const isPinned = pinned.includes(n.$id)
     return (
-      <li key={n.$id} className="animate-slide-up" style={{ animationDelay: `${Math.min(index, 10) * 50}ms` }}>
+      <li key={n.$id} className="group/card animate-slide-up relative" style={{ animationDelay: `${Math.min(index, 10) * 50}ms` }}>
         <Link to={`/note/${n.$id}`}
           className="group relative block overflow-hidden rounded-2xl border border-zinc-200/70 bg-white/70 p-5 pl-6 backdrop-blur transition duration-300 hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-xl hover:shadow-indigo-500/10 dark:border-zinc-800/70 dark:bg-zinc-900/60 dark:hover:border-indigo-500/40">
           <span className={`absolute inset-y-0 left-0 w-1 bg-gradient-to-b ${accentOf(n.$id)} transition-all duration-300 group-hover:w-1.5`} />
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start justify-between gap-4 pr-10">
             <h2 className="text-xl font-semibold transition group-hover:text-indigo-600 dark:group-hover:text-indigo-300">{n.title}</h2>
             <span className="translate-x-2 text-xl text-indigo-500 opacity-0 transition group-hover:translate-x-0 group-hover:opacity-100"><ArrowRight className="size-5" /></span>
           </div>
@@ -118,6 +126,10 @@ export function NoteList() {
             {n.isPublic && <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-emerald-700 dark:text-emerald-300"><Link2 className="size-4" /> shared</span>}
           </div>
         </Link>
+        <button onClick={() => togglePin(n.$id)} title={isPinned ? 'Unpin' : 'Pin to top'} aria-pressed={isPinned}
+          className={`absolute top-4 right-12 rounded-lg p-1.5 transition hover:bg-indigo-500/10 ${isPinned ? 'text-indigo-500' : 'text-zinc-400 opacity-0 group-hover/card:opacity-100 focus-visible:opacity-100'}`}>
+          <Pin className={`size-5 ${isPinned ? 'fill-current' : ''}`} />
+        </button>
       </li>
     )
   }

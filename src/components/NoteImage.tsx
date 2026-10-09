@@ -10,18 +10,22 @@ import { imageUrl } from '../lib/data'
  */
 const cache = new Map<string, Promise<string>>()
 
+/** Fetches a (possibly private) image file as a Blob. */
+export async function fetchImageBlob(fileId: string): Promise<Blob> {
+  const headers: Record<string, string> = {}
+  try {
+    const fallback = localStorage.getItem('cookieFallback')
+    if (fallback) headers['X-Fallback-Cookies'] = fallback
+  } catch { /* storage unavailable */ }
+  const res = await fetch(imageUrl(fileId), { headers, credentials: 'include' })
+  if (!res.ok) throw new Error(`Image failed to load (${res.status})`)
+  return res.blob()
+}
+
 function loadImage(fileId: string): Promise<string> {
   let p = cache.get(fileId)
   if (!p) {
-    const headers: Record<string, string> = {}
-    try {
-      const fallback = localStorage.getItem('cookieFallback')
-      if (fallback) headers['X-Fallback-Cookies'] = fallback
-    } catch { /* storage unavailable */ }
-    p = fetch(imageUrl(fileId), { headers, credentials: 'include' }).then(async res => {
-      if (!res.ok) throw new Error(`Image failed to load (${res.status})`)
-      return URL.createObjectURL(await res.blob())
-    })
+    p = fetchImageBlob(fileId).then(blob => URL.createObjectURL(blob))
     p.catch(() => cache.delete(fileId))
     cache.set(fileId, p)
   }

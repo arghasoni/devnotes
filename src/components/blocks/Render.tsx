@@ -1,10 +1,14 @@
-import { Check, Copy } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { closestCenter, DndContext, type DragEndEvent } from '@dnd-kit/core'
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
+import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { ArrowDown, ArrowUp, Check, Copy, GripVertical } from 'lucide-react'
+import { Fragment, useMemo, useState } from 'react'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import hljs from 'highlight.js'
 import { type Block } from '../../lib/data'
 import { NoteImage, openImage } from '../NoteImage'
+import { SortableItem, useSortSensors } from '../Sortable'
 
 export function Markdown({ text }: { text: string }) {
   const html = useMemo(() => DOMPurify.sanitize(marked.parse(text, { async: false, breaks: true }) as string), [text])
@@ -45,13 +49,36 @@ export function ImageView({ fileId, caption }: { fileId: string; caption: string
   )
 }
 
-export function BlocksView({ blocks }: { blocks: Block[] }) {
+const blockView = (b: Block) =>
+  b.type === 'text' ? <div className="my-4"><Markdown text={b.content} /></div>
+  : b.type === 'code' ? <CodeView code={b.content} lang={b.lang} />
+  : <ImageView fileId={b.fileId} caption={b.caption} />
+
+/** Read-only blocks. With `onReorder`, each block gets a hover toolbar to drag or move it. */
+export function BlocksView({ blocks, onReorder }: { blocks: Block[]; onReorder?: (blocks: Block[]) => void }) {
+  const sensors = useSortSensors()
+  if (!onReorder) return <>{blocks.map(b => <Fragment key={b.id}>{blockView(b)}</Fragment>)}</>
+
+  const moveTo = (from: number, to: number) => { if (to >= 0 && to < blocks.length) onReorder(arrayMove(blocks, from, to)) }
+  const onDragEnd = ({ active, over }: DragEndEvent) => {
+    if (over && active.id !== over.id) moveTo(blocks.findIndex(b => b.id === active.id), blocks.findIndex(b => b.id === over.id))
+  }
   return (
-    <>
-      {blocks.map(b =>
-        b.type === 'text' ? <div key={b.id} className="my-4"><Markdown text={b.content} /></div>
-        : b.type === 'code' ? <CodeView key={b.id} code={b.content} lang={b.lang} />
-        : <ImageView key={b.id} fileId={b.fileId} caption={b.caption} />)}
-    </>
+    <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToVerticalAxis]} onDragEnd={onDragEnd}>
+      <SortableContext items={blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
+        {blocks.map((b, i) => (
+          <SortableItem key={b.id} id={b.id}>{(handle, dragging) => (
+            <div className={`group rounded-lg ${dragging ? 'bg-white px-2 shadow-lg ring-1 ring-indigo-400 dark:bg-zinc-950' : ''}`}>
+              <div className={`absolute -top-3 right-2 z-10 gap-1 rounded-md border border-zinc-200 bg-white px-1 text-xs group-hover:flex group-focus-within:flex dark:border-zinc-700 dark:bg-zinc-900 ${dragging ? 'flex' : 'hidden'}`}>
+                <button {...handle} className="cursor-grab touch-none px-1.5 py-0.5 text-zinc-500 active:cursor-grabbing" title="Drag to reorder (or focus and press Space, then arrow keys)"><GripVertical className="size-4" /></button>
+                <button className="px-1.5 py-0.5" onClick={() => moveTo(i, i - 1)} title="Move up"><ArrowUp className="size-4" /></button>
+                <button className="px-1.5 py-0.5" onClick={() => moveTo(i, i + 1)} title="Move down"><ArrowDown className="size-4" /></button>
+              </div>
+              {blockView(b)}
+            </div>
+          )}</SortableItem>
+        ))}
+      </SortableContext>
+    </DndContext>
   )
 }

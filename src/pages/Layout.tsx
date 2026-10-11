@@ -168,6 +168,10 @@ export function Layout() {
         </div>
         <Sidebar userId={user.$id} folders={folders} notes={notes} reload={reload} setFolders={setFolders} onNavigate={() => setMenu(false)}
           pinned={pinned} recent={recent} onExport={runExport} exporting={!!exporting} />
+        <div className="flex items-center gap-2 border-t border-zinc-200/70 px-5 py-3 md:hidden dark:border-zinc-800/70">
+          <span className="min-w-0 flex-1 truncate text-sm text-zinc-500">{user.email}</span>
+          <button className="btn-ghost shrink-0" onClick={logout}><LogOut className="size-5" /> Sign out</button>
+        </div>
         <div role="separator" aria-orientation="vertical" aria-label="Resize sidebar" tabIndex={0}
           aria-valuemin={SIDEBAR_MIN} aria-valuemax={SIDEBAR_MAX} aria-valuenow={width}
           title="Drag to resize · double-click to reset"

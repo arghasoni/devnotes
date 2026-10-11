@@ -4,7 +4,6 @@ import { Link, matchPath, Navigate, Outlet, useLocation, useNavigate, useOutletC
 import { useAuth } from '../lib/auth'
 import { ThemeToggle, toggleTheme } from '../lib/theme'
 import { getPrefs, listFolders, listNotes, updatePrefs, type Folder, type Note } from '../lib/data'
-import { exportAll } from '../lib/backup'
 import { Sidebar } from '../components/Sidebar'
 import { CommandPalette, type PaletteAction } from '../components/CommandPalette'
 import { reportError } from '../lib/errors'
@@ -88,6 +87,7 @@ export function Layout() {
     if (exporting) return
     setExporting('Preparing backup…')
     try {
+      const { exportAll } = await import('../lib/backup')
       const r = await exportAll(notes, folders, setExporting)
       setExporting(`Backup downloaded: ${r.notes} notes, ${r.images} images${r.failed ? ` (${r.failed} images failed)` : ''}`)
       setTimeout(() => setExporting(''), 4000)
@@ -158,10 +158,10 @@ export function Layout() {
   const newNote = () => navigate(`/new${params.get('folder') ? `?folder=${params.get('folder')}` : ''}`)
 
   return (
-    <div className="relative isolate flex h-screen">
+    <div className="relative isolate flex h-dvh overflow-hidden">
       <Backdrop />
       <aside style={{ '--sidebar-w': `${width}px` } as CSSProperties}
-        className={`${menu ? 'animate-fade-in fixed inset-0 z-30 flex bg-white dark:bg-zinc-950' : 'hidden'} relative shrink-0 flex-col border-r border-zinc-200/70 bg-white/60 backdrop-blur-xl md:static md:flex md:w-[var(--sidebar-w)] dark:border-zinc-800/70 dark:bg-zinc-950/50 ${resizing ? 'select-none' : ''}`}>
+        className={`${menu ? 'animate-fade-in fixed inset-0 z-30 flex bg-white dark:bg-zinc-950' : 'hidden'} shrink-0 flex-col border-r border-zinc-200/70 bg-white/60 backdrop-blur-xl md:relative md:flex md:w-[var(--sidebar-w)] dark:border-zinc-800/70 dark:bg-zinc-950/50 ${resizing ? 'select-none' : ''}`}>
         <div className="flex items-center justify-between px-5 pt-5">
           <Link to="/" className="flex items-center gap-2.5 text-xl font-extrabold tracking-tight"><Logo size={34} /> <span className="text-gradient">DevNotes</span></Link>
           <button className="btn-ghost md:hidden" onClick={() => setMenu(false)} aria-label="Close menu"><X className="size-5" /></button>
@@ -182,12 +182,12 @@ export function Layout() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center gap-3 border-b border-zinc-200/70 bg-white/60 px-5 py-3 backdrop-blur-xl dark:border-zinc-800/70 dark:bg-zinc-950/50">
+        <header className="flex items-center gap-2 border-b border-zinc-200/70 bg-white/60 px-3 py-3 sm:gap-3 sm:px-5 backdrop-blur-xl dark:border-zinc-800/70 dark:bg-zinc-950/50">
           <button className="btn-ghost md:hidden" onClick={() => setMenu(true)} aria-label="Menu"><Menu className="size-5" /></button>
-          <label className="relative w-full max-w-md"><Search className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-zinc-400" /><input className="input pr-20 pl-10" placeholder="Search notes, commands, captions…" value={q} onChange={e => search(e.target.value)} />
+          <label className="relative w-full max-w-md min-w-0"><Search className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-zinc-400" /><input className="input pr-3 pl-10 sm:pr-20" placeholder="Search notes, commands, captions…" value={q} onChange={e => search(e.target.value)} />
             <button type="button" onClick={() => setPalette(true)} title="Command palette — jump anywhere"
               className="absolute top-1/2 right-2 hidden -translate-y-1/2 rounded-md border border-zinc-300 px-1.5 py-0.5 text-xs text-zinc-500 hover:border-indigo-400 hover:text-indigo-600 sm:block dark:border-zinc-700">Ctrl K</button></label>
-          <button className="btn-primary ml-auto whitespace-nowrap" onClick={newNote}><Plus className="size-5" /> Add note</button>
+          <button className="btn-primary ml-auto shrink-0 whitespace-nowrap" onClick={newNote} aria-label="Add note"><Plus className="size-5" /> <span className="hidden sm:inline">Add note</span></button>
           <ThemeToggle />
           <button className="btn-ghost hidden sm:inline-flex" onClick={logout} title={user.email}><LogOut className="size-5" /> Sign out</button>
         </header>

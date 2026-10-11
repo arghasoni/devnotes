@@ -1,4 +1,4 @@
-import hljs from 'highlight.js'
+import hljs from './hljs'
 
 // Languages the editor offers, mapped to highlight.js names for auto-detection
 const HLJS: Record<string, string> = {
